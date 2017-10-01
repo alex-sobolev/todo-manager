@@ -23,16 +23,18 @@ const reducer = (state, action) => {
                 );
 
         case 'DELETE_TODO':
-            return Object
-                .assign(
-                    {},
-                    state,
-                    { todos: state.todos.length < 2 ? []
-                    : [
+            const isSingleOrEmptyTodo = state.todos.length < 2;
+            const todos = isSingleOrEmptyTodo ? []
+                : [
                     ...state.todos.slice(0, action.id),
                     ...state.todos.slice(action.id + 1)
-                    ] }
-                );
+                ];
+
+            if (!isSingleOrEmptyTodo) {
+                todos.forEach((todo, index) => { todo.id = index });
+            }
+
+            return Object.assign({}, state, { todos });
 
         case 'TEXT_ADDED':
             return Object.assign({}, state, {currentText: action.text})
@@ -59,7 +61,7 @@ class App extends React.Component {
 
     render() {
         return (
-            this.props.value.todos.map(todo => (
+            this.props.appData.todos.map(todo => (
                 <div key={todo.id} className='todo-item'>
                     <h2>TODO {todo.id + 1}</h2>
                     <div>{todo.text}</div>
@@ -91,7 +93,7 @@ const onBtnClick = () => {
 
 const render = () => ReactDOM.render(
     <div>
-        <App value={store.getState()} />
+        <App appData={store.getState()} />
         <input
             type='text'
             value={store.getState().currentText ? store.getState().currentText : ''}
@@ -138,4 +140,4 @@ const testAddTODO = () => {
     console.log('All tests passed!');
 };
 
-// testAddTODO();
+testAddTODO();
