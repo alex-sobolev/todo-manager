@@ -3,6 +3,7 @@ import ReactDOM from 'react-dom';
 import { createStore } from 'redux';
 import expect from 'expect';
 import deepFreeze from 'deep-freeze';
+import './main.css';
 
 const reducer = (state, action) => {
     switch(action.type) {
@@ -24,20 +25,33 @@ const reducer = (state, action) => {
 
         case 'DELETE_TODO':
             const isSingleOrEmptyTodo = state.todos.length < 2;
-            const todos = isSingleOrEmptyTodo ? []
+            const todosFromDel = isSingleOrEmptyTodo ? []
                 : [
                     ...state.todos.slice(0, action.id),
                     ...state.todos.slice(action.id + 1)
-                ];
+                ].map((todo, index) => ({
+                        ...todo,
+                        id: index
+                    })
+                );
 
-            if (!isSingleOrEmptyTodo) {
-                todos.forEach((todo, index) => { todo.id = index });
-            }
-
-            return Object.assign({}, state, { todos });
+            return Object.assign({}, state, { todos: todosFromDel });
 
         case 'TEXT_ADDED':
-            return Object.assign({}, state, {currentText: action.text})
+            return Object.assign({}, state, {currentText: action.text});
+        
+        case 'TOGGLE_TODO':
+            const todosFromToggle = state.todos.map(todo => {
+                if (todo.id === action.id) {
+                    return {
+                        ...todo,
+                        isCompleted: !todo.isCompleted
+                    };
+                }
+                return todo;
+            });
+
+            return Object.assign({}, state, { todos: todosFromToggle });
 
         default:
             return state;
@@ -59,12 +73,26 @@ class App extends React.Component {
         });
     }
 
+    onTodoClick(id) {
+        store.dispatch({
+            type: 'TOGGLE_TODO',
+            id
+        })
+    }
+
     render() {
         return (
             this.props.appData.todos.map(todo => (
                 <div key={todo.id} className='todo-item'>
-                    <h2>TODO {todo.id + 1}</h2>
-                    <div>{todo.text}</div>
+                    <h2
+                        className = { todo.isCompleted ? 'todo-item-completed' : '' }
+                        onClick={() => this.onTodoClick(todo.id)}
+                    >
+                        TODO {todo.id + 1}
+                    </h2>
+                    <div>
+                        {todo.text}
+                    </div>
                     <button onClick={() => this.onDelBtnClick(todo.id)}>Delete this TODO</button>
                 </div>
             ))
@@ -93,7 +121,9 @@ const onBtnClick = () => {
 
 const render = () => ReactDOM.render(
     <div>
-        <App appData={store.getState()} />
+        <App
+            appData={store.getState()}
+        />
         <input
             type='text'
             value={store.getState().currentText ? store.getState().currentText : ''}
@@ -131,13 +161,105 @@ const testAddTODO = () => {
     };
 
     deepFreeze(beforeTODO);
-    deepFreeze(afterTODO);
+    deepFreeze(action);
 
     expect(
         reducer(beforeTODO, action)
     ).toEqual(afterTODO);
+};
 
+const testDeleteTodo = () => {
+    const action = {
+        type: 'DELETE_TODO',
+        id: 0
+    };
+    
+    const stateBefore = {
+        todos: [
+            {
+                id: 0,
+                isCompleted: false,
+                text: 'Learn FP!'
+            },
+            {
+                id: 1,
+                isCompleted: false,
+                text: 'Seriously you must learn FP!'
+            }
+        ],
+        currentText: null
+    };
+
+    const stateAfter = {
+        todos: [
+            {
+                id: 0,
+                isCompleted: false,
+                text: 'Seriously you must learn FP!'
+            }
+        ],
+        currentText: null
+    }
+
+    deepFreeze(stateBefore);
+    deepFreeze(action);
+
+    expect(
+        reducer(stateBefore, action)
+    ).toEqual(stateAfter);
+};
+
+const testToggleTodo = () => {
+    const action = {
+        type: 'TOGGLE_TODO',
+        id: 1
+    };
+
+    const stateBefore = {
+        todos: [
+            {
+                id: 0,
+                isCompleted: false,
+                text: 'Learn FP!'
+            },
+            {
+                id: 1,
+                isCompleted: false,
+                text: 'Seriously you must learn FP!'
+            }
+        ],
+        currentText: null
+    };
+
+    const stateAfter = {
+        todos: [
+            {
+                id: 0,
+                isCompleted: false,
+                text: 'Learn FP!'
+            },
+            {
+                id: 1,
+                isCompleted: true,
+                text: 'Seriously you must learn FP!'
+            }
+        ],
+        currentText: null
+    }
+
+    deepFreeze(stateBefore);
+    deepFreeze(action);
+
+    expect(
+        reducer(stateBefore, action)
+    ).toEqual(stateAfter);
+};
+
+const runUnitTests = () => {
+    testAddTODO();
+    testDeleteTodo();
+    testToggleTodo();
     console.log('All tests passed!');
 };
 
-testAddTODO();
+runUnitTests();
