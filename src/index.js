@@ -6,7 +6,7 @@ import deepFreeze from 'deep-freeze';
 import './main.css';
 
 
-const todoReducer = (state, action) => {
+const todo = (state, action) => {
     switch(action.type) {
         case 'ADD_TODO':
             return {
@@ -29,58 +29,65 @@ const todoReducer = (state, action) => {
     }
 };
 
-const todosReducer = (state, action) => {
+const todos = (state = [], action) => {
     switch(action.type) {
         case 'ADD_TODO':
-            return {
-                    ...state,
-                    todos: [
-                        ...state.todos,
-                        todoReducer(undefined, action)
-                    ],
-                    currentText: null
-                };
+            return [
+                ...state,
+                todo(undefined, action)
+            ];
 
         case 'DELETE_TODO':
-            const isSingleOrEmptyTodo = state.todos.length < 2;
-            const todosAfterDelete = isSingleOrEmptyTodo ? []
+            return state.length < 2 ? []
                 : [
-                    ...state.todos.slice(0, action.id),
-                    ...state.todos.slice(action.id + 1)
+                    ...state.slice(0, action.id),
+                    ...state.slice(action.id + 1)
                 ].map((todo, index) => ({
                         ...todo,
                         id: index
                     })
                 );
 
-            return {
-                ...state,
-                todos: todosAfterDelete
-            };
-
-        case 'TEXT_ADDED':
-            return {
-                ...state,
-                currentText: action.text
-            };
-        
         case 'TOGGLE_TODO':
-            return {
-                ...state,
-                todos: state.todos.map(todo => todoReducer(todo, action))
-            };
+            return state.map(todoItem => todo(todoItem, action));
 
         default:
             return state;
     }
 };
 
-const initialState = {
-    todos: [],
-    currentText: null
+const currentText = (state = null, action) => {
+    switch(action.type) {
+        case 'TEXT_ADDED':
+            return action.text;
+        
+        case 'ADD_TODO':
+            return null;
+
+        default:
+            return state;
+    }
 };
 
-const store = createStore(todosReducer, initialState);
+const visibilityFilter = (state = 'SHOW_ALL', action) => {
+    switch(action.type) {
+        case 'SET_VISIBILITY_FILTER':
+            return action.filter;
+
+        default:
+            return state;
+    }
+};
+
+const todosApp = (state = {}, action) => {
+    return {
+        todos: todos(state.todos, action),
+        currentText: currentText(state.currentText, action),
+        visibilityFilter: visibilityFilter(state.visibilityFilter, action)
+    };
+};
+
+const store = createStore(todosApp);
 
 class App extends React.Component {
     onDelBtnClick(id) {
@@ -165,24 +172,22 @@ const testAddTODO = () => {
         text: 'Learn FP!'
     };
 
-    const beforeTODO = {todos:[], currentText: null};
-    const afterTODO = {
-        todos: [
+    const beforeTodo = [];
+
+    const afterTodo = [
             {
                 id: 0,
                 isCompleted: false,
                 text: 'Learn FP!'
             }
-        ],
-        currentText: null
-    };
+        ];
 
-    deepFreeze(beforeTODO);
+    deepFreeze(beforeTodo);
     deepFreeze(action);
 
     expect(
-        todosReducer(beforeTODO, action)
-    ).toEqual(afterTODO);
+        todos(beforeTodo, action)
+    ).toEqual(afterTodo);
 };
 
 const testDeleteTodo = () => {
@@ -191,38 +196,32 @@ const testDeleteTodo = () => {
         id: 0
     };
     
-    const stateBefore = {
-        todos: [
-            {
-                id: 0,
-                isCompleted: false,
-                text: 'Learn FP!'
-            },
-            {
-                id: 1,
-                isCompleted: false,
-                text: 'Seriously you must learn FP!'
-            }
-        ],
-        currentText: null
-    };
+    const stateBefore =  [
+        {
+            id: 0,
+            isCompleted: false,
+            text: 'Learn FP!'
+        },
+        {
+            id: 1,
+            isCompleted: false,
+            text: 'Seriously you must learn FP!'
+        }
+    ];
 
-    const stateAfter = {
-        todos: [
-            {
-                id: 0,
-                isCompleted: false,
-                text: 'Seriously you must learn FP!'
-            }
-        ],
-        currentText: null
-    }
+    const stateAfter = [
+        {
+            id: 0,
+            isCompleted: false,
+            text: 'Seriously you must learn FP!'
+        }
+    ];
 
     deepFreeze(stateBefore);
     deepFreeze(action);
 
     expect(
-        todosReducer(stateBefore, action)
+        todos(stateBefore, action)
     ).toEqual(stateAfter);
 };
 
@@ -232,8 +231,7 @@ const testToggleTodo = () => {
         id: 1
     };
 
-    const stateBefore = {
-        todos: [
+    const stateBefore = [
             {
                 id: 0,
                 isCompleted: false,
@@ -244,12 +242,9 @@ const testToggleTodo = () => {
                 isCompleted: false,
                 text: 'Seriously you must learn FP!'
             }
-        ],
-        currentText: null
-    };
+        ];
 
-    const stateAfter = {
-        todos: [
+    const stateAfter = [
             {
                 id: 0,
                 isCompleted: false,
@@ -260,15 +255,29 @@ const testToggleTodo = () => {
                 isCompleted: true,
                 text: 'Seriously you must learn FP!'
             }
-        ],
-        currentText: null
-    }
+        ];
 
     deepFreeze(stateBefore);
     deepFreeze(action);
 
     expect(
-        todosReducer(stateBefore, action)
+        todos(stateBefore, action)
+    ).toEqual(stateAfter);
+};
+
+const testVisibilityFilter = () => {
+    const stateBefore = 'SHOW_ALL';
+    const action = {
+        type: 'SET_VISIBILITY_FILTER',
+        filter: 'COMPLETED_ONLY'
+    };
+    const stateAfter = 'COMPLETED_ONLY';
+
+    deepFreeze(stateBefore);
+    deepFreeze(action);
+
+    expect(
+        visibilityFilter(stateBefore, action)
     ).toEqual(stateAfter);
 };
 
@@ -276,6 +285,7 @@ const runUnitTests = () => {
     testAddTODO();
     testDeleteTodo();
     testToggleTodo();
+    testVisibilityFilter();
     console.log('All tests passed!');
 };
 
