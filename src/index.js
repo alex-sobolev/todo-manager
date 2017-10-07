@@ -16,10 +16,13 @@ const todoReducer = (state, action) => {
             };
 
         case 'TOGGLE_TODO':
-            return {
-                ...state,
-                isCompleted: !state.isCompleted
-            };
+            if (state.id === action.id) {
+                return {
+                    ...state,
+                    isCompleted: !state.isCompleted
+                };
+            }
+            return state;
 
         default:
             return state;
@@ -40,7 +43,7 @@ const todosReducer = (state, action) => {
 
         case 'DELETE_TODO':
             const isSingleOrEmptyTodo = state.todos.length < 2;
-            const todosFromDel = isSingleOrEmptyTodo ? []
+            const todosAfterDelete = isSingleOrEmptyTodo ? []
                 : [
                     ...state.todos.slice(0, action.id),
                     ...state.todos.slice(action.id + 1)
@@ -50,20 +53,22 @@ const todosReducer = (state, action) => {
                     })
                 );
 
-            return Object.assign({}, state, { todos: todosFromDel });
+            return {
+                ...state,
+                todos: todosAfterDelete
+            };
 
         case 'TEXT_ADDED':
-            return Object.assign({}, state, {currentText: action.text});
+            return {
+                ...state,
+                currentText: action.text
+            };
         
         case 'TOGGLE_TODO':
-            const todosFromToggle = state.todos.map(todo => {
-                if (todo.id === action.id) {
-                    return todoReducer(todo, action);
-                }
-                return todo;
-            });
-
-            return Object.assign({}, state, { todos: todosFromToggle });
+            return {
+                ...state,
+                todos: state.todos.map(todo => todoReducer(todo, action))
+            };
 
         default:
             return state;
