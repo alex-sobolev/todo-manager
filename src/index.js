@@ -5,23 +5,38 @@ import expect from 'expect';
 import deepFreeze from 'deep-freeze';
 import './main.css';
 
-const reducer = (state, action) => {
+
+const todoReducer = (state, action) => {
     switch(action.type) {
         case 'ADD_TODO':
-            return Object
-                .assign(
-                    {},
-                    state,
-                    {todos: [
+            return {
+                id: action.id,
+                isCompleted: action.isCompleted,
+                text: action.text
+            };
+
+        case 'TOGGLE_TODO':
+            return {
+                ...state,
+                isCompleted: !state.isCompleted
+            };
+
+        default:
+            return state;
+    }
+};
+
+const todosReducer = (state, action) => {
+    switch(action.type) {
+        case 'ADD_TODO':
+            return {
+                    ...state,
+                    todos: [
                         ...state.todos,
-                        {
-                            id: action.id,
-                            isCompleted: action.isCompleted,
-                            text: action.text
-                        }
-                    ]},
-                    {currentText: null}
-                );
+                        todoReducer(undefined, action)
+                    ],
+                    currentText: null
+                };
 
         case 'DELETE_TODO':
             const isSingleOrEmptyTodo = state.todos.length < 2;
@@ -43,10 +58,7 @@ const reducer = (state, action) => {
         case 'TOGGLE_TODO':
             const todosFromToggle = state.todos.map(todo => {
                 if (todo.id === action.id) {
-                    return {
-                        ...todo,
-                        isCompleted: !todo.isCompleted
-                    };
+                    return todoReducer(todo, action);
                 }
                 return todo;
             });
@@ -63,7 +75,7 @@ const initialState = {
     currentText: null
 };
 
-const store = createStore(reducer, initialState);
+const store = createStore(todosReducer, initialState);
 
 class App extends React.Component {
     onDelBtnClick(id) {
@@ -164,7 +176,7 @@ const testAddTODO = () => {
     deepFreeze(action);
 
     expect(
-        reducer(beforeTODO, action)
+        todosReducer(beforeTODO, action)
     ).toEqual(afterTODO);
 };
 
@@ -205,7 +217,7 @@ const testDeleteTodo = () => {
     deepFreeze(action);
 
     expect(
-        reducer(stateBefore, action)
+        todosReducer(stateBefore, action)
     ).toEqual(stateAfter);
 };
 
@@ -251,7 +263,7 @@ const testToggleTodo = () => {
     deepFreeze(action);
 
     expect(
-        reducer(stateBefore, action)
+        todosReducer(stateBefore, action)
     ).toEqual(stateAfter);
 };
 
