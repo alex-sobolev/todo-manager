@@ -104,20 +104,24 @@ class App extends React.Component {
 
     render() {
         return (
-            this.props.appData.todos.map(todo => (
-                <div key={todo.id} className='todo-item'>
-                    <h2
-                        className = { todo.isCompleted ? 'todo-item-completed' : '' }
-                        onClick={() => this.onTodoClick(todo.id)}
-                    >
-                        TODO # {todo.id + 1}
-                    </h2>
-                    <div>
-                        {todo.text}
-                    </div>
-                    <button onClick={() => this.onDelBtnClick(todo.id)}>Delete this TODO</button>
-                </div>
-            ))
+            <ul>
+                {
+                    this.props.appData.todos.map(todo => (
+                        <li key={todo.id} className='todo-item'>
+                            <span
+                                className = { `todo-header ${todo.isCompleted ? 'todo-item-completed' : '' }` }
+                                onClick={() => this.onTodoClick(todo.id)}
+                            >
+                                TODO # {todo.id + 1}:
+                            </span>
+                            <span className='todo-text'>
+                                {todo.text}
+                            </span>
+                            <button onClick={() => this.onDelBtnClick(todo.id)}>Delete this TODO</button>
+                        </li>
+                    ))
+                }
+            </ul>
         )
     }
 }

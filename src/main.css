@@ -1,3 +1,15 @@
+.todo-item {
+    margin-top: 15px;
+}
+
 .todo-item-completed {
     text-decoration: line-through;
+}
+
+.todo-header {
+    padding-right: 10px;
+}
+
+.todo-text {
+    padding-right: 10px;
 }
