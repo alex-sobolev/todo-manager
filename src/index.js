@@ -1,6 +1,6 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
-import { createStore } from 'redux';
+import { createStore, combineReducers } from 'redux';
 import expect from 'expect';
 import deepFreeze from 'deep-freeze';
 import './main.css';
@@ -79,13 +79,11 @@ const visibilityFilter = (state = 'SHOW_ALL', action) => {
     }
 };
 
-const todosApp = (state = {}, action) => {
-    return {
-        todos: todos(state.todos, action),
-        currentText: currentText(state.currentText, action),
-        visibilityFilter: visibilityFilter(state.visibilityFilter, action)
-    };
-};
+const todosApp = combineReducers({
+    todos,
+    currentText,
+    visibilityFilter
+});
 
 const store = createStore(todosApp);
 
@@ -112,7 +110,7 @@ class App extends React.Component {
                         className = { todo.isCompleted ? 'todo-item-completed' : '' }
                         onClick={() => this.onTodoClick(todo.id)}
                     >
-                        TODO {todo.id + 1}
+                        TODO # {todo.id + 1}
                     </h2>
                     <div>
                         {todo.text}
@@ -145,15 +143,15 @@ const onBtnClick = () => {
 
 const render = () => ReactDOM.render(
     <div>
-        <App
-            appData={store.getState()}
-        />
         <input
             type='text'
             value={store.getState().currentText ? store.getState().currentText : ''}
             onChange={event => onInputChange(event.target.value)}
         />
         <button onClick={() => onBtnClick()}>Add TODO</button>
+        <App
+            appData={store.getState()}
+        />
     </div>,
     document.getElementById('root')
 );
