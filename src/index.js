@@ -103,11 +103,22 @@ class App extends React.Component {
     }
 
     render() {
+        const visibilityFilter = this.props.appData.visibilityFilter;
+        const shouldHide = todo => {
+            const shouldHideCompleted = todo.isCompleted && visibilityFilter === 'UNCOMPLETED_ONLY';
+            const shouldHideUncompleted = !todo.isCompleted && visibilityFilter === 'COMPLETED_ONLY';
+
+            return shouldHideCompleted || shouldHideUncompleted ? true : false;
+        };
+
         return (
             <ul>
                 {
                     this.props.appData.todos.map(todo => (
-                        <li key={todo.id} className='todo-item'>
+                        <li
+                            key={todo.id}
+                            className = { `todo-item ${ shouldHide(todo) ? 'todo-item-hidden' : '' }` }
+                        >
                             <span
                                 className = { `todo-header ${todo.isCompleted ? 'todo-item-completed' : '' }` }
                                 onClick={() => this.onTodoClick(todo.id)}
@@ -145,6 +156,13 @@ const onBtnClick = () => {
     })
 };
 
+const onDisplayTodosClick = filter => {
+    store.dispatch({
+        type: 'SET_VISIBILITY_FILTER',
+        filter
+    });
+}
+
 const render = () => ReactDOM.render(
     <div>
         <input
@@ -153,6 +171,26 @@ const render = () => ReactDOM.render(
             onChange={event => onInputChange(event.target.value)}
         />
         <button onClick={() => onBtnClick()}>Add TODO</button>
+        <div className='filtering-btn-container'>
+            <button
+                className = 'filtering-btn-all'
+                onClick = {() => onDisplayTodosClick('SHOW_ALL')}
+            >
+                Show All TODOs
+            </button>
+            <button
+                className = 'filtering-btn-all'
+                onClick = {() => onDisplayTodosClick('COMPLETED_ONLY')}
+            >
+                Show completed TODOs
+            </button>
+            <button
+                className = 'filtering-btn-all'
+                onClick = {() => onDisplayTodosClick('UNCOMPLETED_ONLY')}
+            >
+                Show uncompleted TODOs
+            </button>
+        </div>
         <App
             appData={store.getState()}
         />
