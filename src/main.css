@@ -6,10 +6,6 @@
     text-decoration: line-through;
 }
 
-.todo-item-hidden {
-    display: none;
-}
-
 .todo-header {
     padding-right: 10px;
 }
@@ -20,4 +16,9 @@
 
 .filtering-btn-container {
     margin-top: 10px;
+}
+
+.filtering-btn-active {
+    font-weight: bold;
+    color: hotpink;
 }

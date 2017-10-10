@@ -102,28 +102,34 @@ class App extends React.Component {
         })
     }
 
-    render() {
-        const visibilityFilter = this.props.appData.visibilityFilter;
-        const shouldHide = todo => {
-            const shouldHideCompleted = todo.isCompleted && visibilityFilter === 'UNCOMPLETED_ONLY';
-            const shouldHideUncompleted = !todo.isCompleted && visibilityFilter === 'COMPLETED_ONLY';
+    getVisibleTodos(todos, currentFilter) {
+        switch(currentFilter) {
+            case 'SHOW_ACTIVE':
+                return todos.filter(todo => !todo.isCompleted);
+            case 'SHOW_COMPLETED':
+                return todos.filter(todo => todo.isCompleted);
+            default:
+                return todos;
+        }
+    }
 
-            return shouldHideCompleted || shouldHideUncompleted ? true : false;
-        };
+    render() {
+        const { todos, visibilityFilter } = this.props.appData;
+        const visibleTodos = this.getVisibleTodos(todos, visibilityFilter);
 
         return (
             <ul>
                 {
-                    this.props.appData.todos.map(todo => (
+                    visibleTodos.map((todo, index) => (
                         <li
                             key={todo.id}
-                            className = { `todo-item ${ shouldHide(todo) ? 'todo-item-hidden' : '' }` }
+                            className = { `todo-item ${ todo.isCompleted ? 'todo-item-completed' : 'todo-item-active' }` }
                         >
                             <span
                                 className = { `todo-header ${todo.isCompleted ? 'todo-item-completed' : '' }` }
-                                onClick={() => this.onTodoClick(todo.id)}
+                                onClick = { () => this.onTodoClick(todo.id) }
                             >
-                                TODO # {todo.id + 1}:
+                                TODO # {index + 1}:
                             </span>
                             <span className='todo-text'>
                                 {todo.text}
@@ -163,6 +169,8 @@ const onDisplayTodosClick = filter => {
     });
 }
 
+const getVisibilityFilter = () => store.getState().visibilityFilter;
+
 const render = () => ReactDOM.render(
     <div>
         <input
@@ -173,20 +181,20 @@ const render = () => ReactDOM.render(
         <button onClick={() => onBtnClick()}>Add TODO</button>
         <div className='filtering-btn-container'>
             <button
-                className = 'filtering-btn-all'
+                className = { `filtering-btn-all ${ getVisibilityFilter() === 'SHOW_ALL' ? 'filtering-btn-active' : '' }` }
                 onClick = {() => onDisplayTodosClick('SHOW_ALL')}
             >
                 Show All TODOs
             </button>
             <button
-                className = 'filtering-btn-all'
-                onClick = {() => onDisplayTodosClick('COMPLETED_ONLY')}
+                className = { `filtering-btn-comleted ${ getVisibilityFilter() === 'SHOW_COMPLETED' ? 'filtering-btn-active' : '' }` }
+                onClick = {() => onDisplayTodosClick('SHOW_COMPLETED')}
             >
                 Show completed TODOs
             </button>
             <button
-                className = 'filtering-btn-all'
-                onClick = {() => onDisplayTodosClick('UNCOMPLETED_ONLY')}
+                className = { `filtering-btn-active-todos ${ getVisibilityFilter() === 'SHOW_ACTIVE' ? 'filtering-btn-active' : '' }` }
+                onClick = {() => onDisplayTodosClick('SHOW_ACTIVE')}
             >
                 Show uncompleted TODOs
             </button>
