@@ -1,91 +1,13 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
-import { createStore, combineReducers } from 'redux';
-import expect from 'expect';
-import deepFreeze from 'deep-freeze';
+import { createStore } from 'redux';
 import './main.css';
+import combinedReducer from './reducers';
+import reducersTests from './reducers/tests';
 
+reducersTests();
 
-const todo = (state, action) => {
-    switch(action.type) {
-        case 'ADD_TODO':
-            return {
-                id: action.id,
-                isCompleted: action.isCompleted,
-                text: action.text
-            };
-
-        case 'TOGGLE_TODO':
-            if (state.id === action.id) {
-                return {
-                    ...state,
-                    isCompleted: !state.isCompleted
-                };
-            }
-            return state;
-
-        default:
-            return state;
-    }
-};
-
-const todos = (state = [], action) => {
-    switch(action.type) {
-        case 'ADD_TODO':
-            return [
-                ...state,
-                todo(undefined, action)
-            ];
-
-        case 'DELETE_TODO':
-            return state.length < 2 ? []
-                : [
-                    ...state.slice(0, action.id),
-                    ...state.slice(action.id + 1)
-                ].map((todo, index) => ({
-                        ...todo,
-                        id: index
-                    })
-                );
-
-        case 'TOGGLE_TODO':
-            return state.map(todoItem => todo(todoItem, action));
-
-        default:
-            return state;
-    }
-};
-
-const currentText = (state = null, action) => {
-    switch(action.type) {
-        case 'TEXT_ADDED':
-            return action.text;
-        
-        case 'ADD_TODO':
-            return null;
-
-        default:
-            return state;
-    }
-};
-
-const visibilityFilter = (state = 'SHOW_ALL', action) => {
-    switch(action.type) {
-        case 'SET_VISIBILITY_FILTER':
-            return action.filter;
-
-        default:
-            return state;
-    }
-};
-
-const todosApp = combineReducers({
-    todos,
-    currentText,
-    visibilityFilter
-});
-
-const store = createStore(todosApp);
+const store = createStore(combinedReducer);
 
 class App extends React.Component {
     onDelBtnClick(id) {
@@ -171,6 +93,9 @@ const onDisplayTodosClick = filter => {
 
 const getVisibilityFilter = () => store.getState().visibilityFilter;
 
+const assignActiveFilterStatusIfNeeded = filter =>
+    getVisibilityFilter() === filter ? 'filtering-btn-active' : '';
+
 const render = () => ReactDOM.render(
     <div>
         <input
@@ -181,19 +106,19 @@ const render = () => ReactDOM.render(
         <button onClick={() => onBtnClick()}>Add TODO</button>
         <div className='filtering-btn-container'>
             <button
-                className = { `filtering-btn-all ${ getVisibilityFilter() === 'SHOW_ALL' ? 'filtering-btn-active' : '' }` }
+                className = { `filtering-btn-all ${assignActiveFilterStatusIfNeeded('SHOW_ALL')}` }
                 onClick = {() => onDisplayTodosClick('SHOW_ALL')}
             >
                 Show All TODOs
             </button>
             <button
-                className = { `filtering-btn-comleted ${ getVisibilityFilter() === 'SHOW_COMPLETED' ? 'filtering-btn-active' : '' }` }
+                className = { `filtering-btn-comleted ${assignActiveFilterStatusIfNeeded('SHOW_COMPLETED')}` }
                 onClick = {() => onDisplayTodosClick('SHOW_COMPLETED')}
             >
                 Show completed TODOs
             </button>
             <button
-                className = { `filtering-btn-active-todos ${ getVisibilityFilter() === 'SHOW_ACTIVE' ? 'filtering-btn-active' : '' }` }
+                className = { `filtering-btn-active-todos ${assignActiveFilterStatusIfNeeded('SHOW_ACTIVE')}` }
                 onClick = {() => onDisplayTodosClick('SHOW_ACTIVE')}
             >
                 Show uncompleted TODOs
@@ -209,132 +134,3 @@ const render = () => ReactDOM.render(
 render();
 
 store.subscribe(render);
-
-
-// Unit Tests
-const testAddTODO = () => {
-    const action = {
-        type: 'ADD_TODO',
-        id: 0,
-        isCompleted: false,
-        text: 'Learn FP!'
-    };
-
-    const beforeTodo = [];
-
-    const afterTodo = [
-            {
-                id: 0,
-                isCompleted: false,
-                text: 'Learn FP!'
-            }
-        ];
-
-    deepFreeze(beforeTodo);
-    deepFreeze(action);
-
-    expect(
-        todos(beforeTodo, action)
-    ).toEqual(afterTodo);
-};
-
-const testDeleteTodo = () => {
-    const action = {
-        type: 'DELETE_TODO',
-        id: 0
-    };
-    
-    const stateBefore =  [
-        {
-            id: 0,
-            isCompleted: false,
-            text: 'Learn FP!'
-        },
-        {
-            id: 1,
-            isCompleted: false,
-            text: 'Seriously you must learn FP!'
-        }
-    ];
-
-    const stateAfter = [
-        {
-            id: 0,
-            isCompleted: false,
-            text: 'Seriously you must learn FP!'
-        }
-    ];
-
-    deepFreeze(stateBefore);
-    deepFreeze(action);
-
-    expect(
-        todos(stateBefore, action)
-    ).toEqual(stateAfter);
-};
-
-const testToggleTodo = () => {
-    const action = {
-        type: 'TOGGLE_TODO',
-        id: 1
-    };
-
-    const stateBefore = [
-            {
-                id: 0,
-                isCompleted: false,
-                text: 'Learn FP!'
-            },
-            {
-                id: 1,
-                isCompleted: false,
-                text: 'Seriously you must learn FP!'
-            }
-        ];
-
-    const stateAfter = [
-            {
-                id: 0,
-                isCompleted: false,
-                text: 'Learn FP!'
-            },
-            {
-                id: 1,
-                isCompleted: true,
-                text: 'Seriously you must learn FP!'
-            }
-        ];
-
-    deepFreeze(stateBefore);
-    deepFreeze(action);
-
-    expect(
-        todos(stateBefore, action)
-    ).toEqual(stateAfter);
-};
-
-const testVisibilityFilter = () => {
-    const stateBefore = 'SHOW_ALL';
-    const action = {
-        type: 'SET_VISIBILITY_FILTER',
-        filter: 'COMPLETED_ONLY'
-    };
-    const stateAfter = 'COMPLETED_ONLY';
-
-    deepFreeze(stateBefore);
-    deepFreeze(action);
-
-    expect(
-        visibilityFilter(stateBefore, action)
-    ).toEqual(stateAfter);
-};
-
-const runUnitTests = () => {
-    testAddTODO();
-    testDeleteTodo();
-    testToggleTodo();
-    testVisibilityFilter();
-    console.log('All tests passed!');
-};
-
-runUnitTests();
