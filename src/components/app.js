@@ -1,6 +1,6 @@
 import React from 'react';
-import Header from './header';
-import Todos from './todos';
+import Header from '../containers/header';
+import Todos from '../containers/todos';
 
 class App extends React.Component {
     render() {
