@@ -2,6 +2,7 @@ import React from 'react';
 import { bindActionCreators } from 'redux';
 import { connect } from 'react-redux';
 import actions from '../actions';
+import Todo from '../components/todo';
 
 const getVisibleTodos = (todos, currentFilter) => {
     switch(currentFilter) {
@@ -22,21 +23,13 @@ class Todos extends React.Component {
             <ul>
                 {
                     visibleTodos.map((todo, index) => (
-                        <li
+                        <Todo
                             key={todo.id}
-                            className = { `todo-item ${ todo.isCompleted ? 'todo-item-completed' : 'todo-item-active' }` }
-                        >
-                            <span
-                                className = 'todo-header'
-                                onClick = { () => this.props.toggleTodo(todo.id) }
-                            >
-                                TODO # {index + 1}:
-                            </span>
-                            <span className='todo-text'>
-                                {todo.text}
-                            </span>
-                            <button onClick={() => this.props.deleteTodo(todo.id)}>Delete this TODO</button>
-                        </li>
+                            onTodoClick = { () => this.props.toggleTodo(todo.id) }
+                            onDeleteTodoClick = { () => this.props.deleteTodo(todo.id) }
+                            index = { index }
+                            todo = { todo }
+                        />
                     ))
                 }
             </ul>

@@ -6,7 +6,7 @@ const todos = (state = [], action) => {
         case 'ADD_TODO':
             return [
                 ...state,
-                todo(undefined, action)
+                todo(null, action)
             ];
 
         case 'DELETE_TODO':
